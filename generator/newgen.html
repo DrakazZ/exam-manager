@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur d'Examens - Formation YOLO pour Zones de Notation</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .exam-paper {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 20px auto;
+            padding: 20mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            page-break-after: always;
+            position: relative;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .university-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .exam-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .exam-info {
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        
+        .grading-column-left {
+            position: absolute;
+            left: 5mm;
+            top: 80mm;
+            width: 25mm;
+            background: #f9f9f9;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 2px;
+        }
+        
+        .grading-column-right {
+            position: absolute;
+            right: 5mm;
+            top: 80mm;
+            width: 25mm;
+            background: #f9f9f9;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 2px;
+        }
+        
+        .column-header {
+            font-size: 9px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #666;
+            padding-bottom: 3px;
+            text-transform: uppercase;
+        }
+        
+        .grade-row-compact {
+            margin: 8px 0;
+            font-size: 10px;
+        }
+        
+        .grade-row-spaced {
+            margin: 18px 0;
+            font-size: 10px;
+        }
+        
+        .question-num {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 9px;
+        }
+        
+        .checkbox {
+            width: 11px;
+            height: 11px;
+            border: 1.5px solid #000;
+            display: inline-block;
+            margin: 2px 4px 2px 0;
+            position: relative;
+            background: white;
+        }
+        
+        .checkbox-small {
+            width: 9px;
+            height: 9px;
+            border: 1px solid #000;
+        }
+        
+        .checkbox-large {
+            width: 13px;
+            height: 13px;
+            border: 2px solid #000;
+        }
+        
+        .checkbox.checked::after {
+            content: "✓";
+            font-size: 9px;
+            position: absolute;
+            top: -3px;
+            left: 1px;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .checkbox.filled {
+            background: #000;
+        }
+        
+        .checkbox.x-marked::after {
+            content: "✗";
+            font-size: 9px;
+            position: absolute;
+            top: -3px;
+            left: 0px;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .checkbox.cross::after {
+            content: "✗";
+            font-size: 9px;
+            position: absolute;
+            top: -3px;
+            left: 0px;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .checkbox.dot::after {
+            content: "•";
+            font-size: 12px;
+            position: absolute;
+            top: -4px;
+            left: 2px;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .checkbox.line {
+            background: linear-gradient(to right, black 0%, black 100%);
+            background-size: 100% 2px;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .grade-options {
+            font-size: 8px;
+            line-height: 1.2;
+        }
+        
+        .grade-option-row {
+            margin: 3px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .manual-grade-space {
+            margin-top: 8px;
+            border-top: 1px dotted #999;
+            padding-top: 4px;
+            font-size: 7px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .content-area-left {
+            margin-left: 40mm;
+            line-height: 1.6;
+        }
+        
+        .content-area-right {
+            margin-right: 40mm;
+            line-height: 1.6;
+        }
+        
+        .question {
+            margin: 20px 0;
+            padding: 12px 0;
+        }
+        
+        .question-header {
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .answer-space {
+            border-bottom: 1px solid #ccc;
+            height: 35px;
+            margin: 10px 0;
+        }
+        
+        .multiple-choice {
+            margin: 12px 0;
+        }
+        
+        .choice {
+            margin: 6px 0;
+        }
+        
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        
+        .info-field {
+            border-bottom: 1px solid #000;
+            padding: 2px 5px;
+            min-width: 120px;
+        }
+        
+        .qr-code-section {
+            position: absolute;
+            top: 15mm;
+            right: 15mm;
+            width: 25mm;
+            height: 25mm;
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        
+        .qr-code {
+            width: 23mm;
+            height: 23mm;
+            background: white;
+        }
+        
+        .generate-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            z-index: 1000;
+            max-width: 320px;
+        }
+        
+        .controls-section {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        
+        button {
+            margin: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background: #fff;
+        }
+        
+        button:hover {
+            background: #f0f0f0;
+        }
+        
+        .primary-btn {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .primary-btn:hover {
+            background: #0056b3;
+        }
+        
+        input, select {
+            margin: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        
+        .layout-info {
+            font-size: 10px;
+            color: #666;
+            margin: 5px 0;
+            font-style: italic;
+        }
+        
+        .rotation-wrapper {
+            transform-origin: center;
+        }
+        
+        .file-upload-section {
+            margin: 10px 0;
+            padding: 10px;
+            border: 2px dashed #007bff;
+            border-radius: 5px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        
+        .file-upload-section.has-file {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .qr-preview {
+            max-width: 80px;
+            max-height: 80px;
+            border: 1px solid #ccc;
+            margin: 5px auto;
+            display: block;
+        }
+        
+        .file-info {
+            font-size: 11px;
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.12;
+            mix-blend-mode: multiply;
+        }
+        
+        @media print {
+            .generate-controls {
+                display: none !important;
+            }
+            
+            .exam-paper {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+                width: 210mm;
+                height: 297mm;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+            
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="generate-controls">
+        <h3>Générateur d'Examens Français</h3>
+        
+        <div class="controls-section">
+            <h4>QR Code Personnalisé</h4>
+            <div class="file-upload-section" id="qrUploadSection">
+                <input type="file" id="qrCodeUpload" accept="image/*" style="display: none;">
+                <button type="button" onclick="document.getElementById('qrCodeUpload').click()">
+                    📷 Choisir QR Code
+                </button>
+                <div class="file-info">Formats supportés: PNG, JPG, GIF</div>
+                <div id="qrPreviewContainer"></div>
+                <button type="button" id="clearQrBtn" onclick="clearCustomQR()" style="display: none; background: #dc3545; color: white;">
+                    ❌ Supprimer
+                </button>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <h4>Paramètres de Génération</h4>
+            <div>
+                <label>Nombre de copies : </label>
+                <input type="number" id="numPapers" value="20" min="5" max="50">
+            </div>
+            <div>
+                <label>Questions par copie : </label>
+                <input type="number" id="questionsPerPaper" value="8" min="4" max="12">
+            </div>
+            <div>
+                <input type="checkbox" id="varySpacing" checked> Varier l'espacement des cases<br>
+                <input type="checkbox" id="varyPosition" checked> Alterner gauche/droite<br>
+                <input type="checkbox" id="varyCheckboxSizes" checked> Varier taille des cases<br>
+                <input type="checkbox" id="varyAppearance" checked> Varier l'apparence générale
+            </div>
+            <button onclick="generateExamSet()" class="primary-btn">Générer les Examens</button>
+        </div>
+        
+        <div class="controls-section">
+            <h4>Statistiques</h4>
+            <div id="layoutStats" class="layout-info">
+                Position gauche : <span id="leftCount">0</span><br>
+                Position droite : <span id="rightCount">0</span><br>
+                Espacement compact : <span id="compactCount">0</span><br>
+                Espacement aéré : <span id="spacedCount">0</span>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <h4>Effets Réalistes</h4>
+            <div>
+                <input type="checkbox" id="addNoise" checked> Texture papier<br>
+                <input type="checkbox" id="varyRotation" checked> Rotation légère<br>
+                <input type="checkbox" id="varyLighting" checked> Variations d'éclairage<br>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <h4>Export</h4>
+            <button onclick="exportLayoutGuide()">Guide de Labellisation</button>
+            <button onclick="printAllPapers()">Imprimer Tout</button>
+        </div>
+        
+        <div class="layout-info" id="currentInfo">
+            Informations sur la génération...
+        </div>
+    </div>
+
+    <div id="papers-container">
+        <!-- Les copies d'examen seront générées ici -->
+    </div>
+
+    <script>
+        const CONFIG = {
+            paperWidth: 210,
+            paperHeight: 297,
+            mmToPixel: 3.78
+        };
+        
+        let generationStats = {
+            left: 0,
+            right: 0,
+            compact: 0,
+            spaced: 0,
+            totalPapers: 0
+        };
+        
+        let examData = [];
+        let customQRImage = null;
+        
+        const universities = [
+            "Université de Technologie de Tunis", "Université de Tunis El Manar", 
+            "Institut National des Sciences Appliquées", "École Nationale d'Ingénieurs",
+            "Université de Sfax", "Institut Supérieur de Technologie", 
+            "École Polytechnique de Tunisie", "Université de Monastir",
+            "Institut des Hautes Études Commerciales", "Université de Carthage"
+        ];
+        
+        const subjects = [
+            "Mathématiques Appliquées", "Physique Générale", "Informatique Fondamentale", 
+            "Mécanique des Structures", "Analyse Mathématique", "Algèbre Linéaire",
+            "Algorithmique et Programmation", "Systèmes Numériques", "Statistiques Appliquées", 
+            "Chimie Organique", "Biologie Moléculaire", "Économie Générale", "Thermodynamique",
+            "Électronique Analogique", "Résistance des Matériaux", "Calcul Différentiel"
+        ];
+        
+        const questionTypes = [
+            "Résolvez l'équation suivante :", "Calculez l'intégrale de :",
+            "Démontrez la formule pour :", "Expliquez le concept de :",
+            "Trouvez la solution de :", "Déterminez la valeur de :",
+            "Prouvez le théorème :", "Analysez le cas suivant :",
+            "Évaluez l'expression :", "Simplifiez l'équation :",
+            "Concevez un système qui :", "Comparez les méthodes :",
+            "Implémentez l'algorithme :", "Optimisez la fonction :"
+        ];
+
+        const frenchTexts = [
+            "Dans cette question, nous étudions les propriétés mathématiques fondamentales.",
+            "Considérez les paramètres donnés et analysez leur comportement dynamique.",
+            "Cette problématique nécessite une approche méthodique et rigoureuse.",
+            "Appliquez les principes théoriques vus en cours à cet exemple pratique.",
+            "Utilisez les formules appropriées pour résoudre ce problème complexe.",
+            "Démontrez votre raisonnement par des étapes claires et détaillées.",
+            "Cette analyse requiert une compréhension approfondie des concepts étudiés."
+        ];
+
+        const choiceTexts = [
+            "Application directe de la formule standard",
+            "Méthode alternative par approximation",
+            "Approche analytique complète",
+            "Solution numérique itérative",
+            "Technique d'optimisation avancée",
+            "Méthode de résolution classique"
+        ];
+
+        document.getElementById('qrCodeUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        customQRImage = img;
+                        showQRPreview(img);
+                        updateQRUploadSection(true);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function showQRPreview(img) {
+            const container = document.getElementById('qrPreviewContainer');
+            container.innerHTML = '';
+            
+            const preview = document.createElement('img');
+            preview.src = img.src;
+            preview.className = 'qr-preview';
+            preview.alt = 'QR Code Preview';
+            
+            const info = document.createElement('div');
+            info.className = 'file-info';
+            info.textContent = `${img.width}x${img.height}px`;
+            
+            container.appendChild(preview);
+            container.appendChild(info);
+        }
+
+        function updateQRUploadSection(hasFile) {
+            const section = document.getElementById('qrUploadSection');
+            const clearBtn = document.getElementById('clearQrBtn');
+            
+            if (hasFile) {
+                section.classList.add('has-file');
+                clearBtn.style.display = 'inline-block';
+            } else {
+                section.classList.remove('has-file');
+                clearBtn.style.display = 'none';
+            }
+        }
+
+        function clearCustomQR() {
+            customQRImage = null;
+            document.getElementById('qrCodeUpload').value = '';
+            document.getElementById('qrPreviewContainer').innerHTML = '';
+            updateQRUploadSection(false);
+        }
+
+        function getRandomChoice(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+        
+        function getRandomFloat(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+        
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateCheckboxStates(numQuestions) {
+            const states = [];
+            for (let i = 0; i < numQuestions; i++) {
+                const gradeType = Math.random();
+                const markingStyle = getRandomMarkingStyle();
+                
+                if (gradeType < 0.35) {
+                    states.push({
+                        bon: markingStyle,
+                        moyen: 'unchecked',
+                        non: 'unchecked',
+                        grade: 'bon'
+                    });
+                } else if (gradeType < 0.65) {
+                    states.push({
+                        bon: 'unchecked',
+                        moyen: markingStyle,
+                        non: 'unchecked',
+                        grade: 'moyen'
+                    });
+                } else {
+                    states.push({
+                        bon: 'unchecked',
+                        moyen: 'unchecked',
+                        non: markingStyle,
+                        grade: 'non'
+                    });
+                }
+            }
+            return states;
+        }
+        
+        function getRandomMarkingStyle() {
+            const styles = ['checked', 'filled', 'x-marked', 'cross', 'dot', 'line'];
+            return getRandomChoice(styles);
+        }
+
+        function generateGradingColumn(position, spacing, numQuestions, checkboxStates) {
+            const checkboxSize = document.getElementById('varyCheckboxSizes')?.checked ? 
+                getRandomChoice(['checkbox', 'checkbox-large', 'checkbox-small']) : 'checkbox';
+            
+            const columnClass = position === 'left' ? 'grading-column-left' : 'grading-column-right';
+            const rowClass = spacing === 'compact' ? 'grade-row-compact' : 'grade-row-spaced';
+            
+            let html = `<div class="${columnClass}">`;
+            
+            const headers = ['NOTATION', 'ÉVALUATION', 'BARÈME', 'CORRECTION'];
+            html += `<div class="column-header">${getRandomChoice(headers)}</div>`;
+            
+            for (let i = 0; i < numQuestions; i++) {
+                const state = checkboxStates[i];
+                
+                html += `<div class="${rowClass}" data-question="${i + 1}">`;
+                html += `<div class="question-num">Q${i + 1}</div>`;
+                
+                html += `<div class="grade-options">`;
+                html += `<div class="grade-option-row">`;
+                html += `<span class="${checkboxSize} ${state.bon !== 'unchecked' ? state.bon : ''}" data-grade="bon"></span> Bon`;
+                html += `</div>`;
+                html += `<div class="grade-option-row">`;
+                html += `<span class="${checkboxSize} ${state.moyen !== 'unchecked' ? state.moyen : ''}" data-grade="moyen"></span> Moy`;
+                html += `</div>`;
+                html += `<div class="grade-option-row">`;
+                html += `<span class="${checkboxSize} ${state.non !== 'unchecked' ? state.non : ''}" data-grade="non"></span> Faib`;
+                html += `</div>`;
+                html += `</div>`;
+                
+                html += `<div class="manual-grade-space">__/20</div>`;
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+
+        function generateExamPaper(paperIndex) {
+            const university = getRandomChoice(universities);
+            const subject = getRandomChoice(subjects);
+            const numQuestions = parseInt(document.getElementById('questionsPerPaper').value) || getRandomInt(6, 10);
+            const semester = Math.random() > 0.5 ? 'Automne' : 'Printemps';
+            const year = 2020 + Math.floor(Math.random() * 5);
+            const duration = getRandomChoice(['1h30', '2h00', '2h30', '3h00']);
+            
+            const position = document.getElementById('varyPosition')?.checked ? 
+                (Math.random() > 0.5 ? 'left' : 'right') : 'left';
+            const spacing = document.getElementById('varySpacing')?.checked ? 
+                (Math.random() > 0.6 ? 'spaced' : 'compact') : 'compact';
+            
+            const checkboxStates = generateCheckboxStates(numQuestions);
+            
+            generationStats[position]++;
+            generationStats[spacing]++;
+            generationStats.totalPapers++;
+            
+            examData.push({
+                paperIndex,
+                position,
+                spacing,
+                numQuestions,
+                checkboxStates,
+                university,
+                subject
+            });
+            
+            let wrapperStyle = '';
+            if (document.getElementById('varyRotation')?.checked) {
+                const rotation = getRandomFloat(-2, 2);
+                wrapperStyle = `transform: rotate(${rotation}deg);`;
+            }
+            
+            let html = `<div class="rotation-wrapper" style="${wrapperStyle}">`;
+            html += `<div class="exam-paper" data-paper-index="${paperIndex}" data-position="${position}" data-spacing="${spacing}">`;
+            
+            if (document.getElementById('addNoise')?.checked) {
+                html += `<canvas class="noise-overlay" width="794" height="1123"></canvas>`;
+            }
+            
+            let headerStyle = '';
+            if (document.getElementById('varyAppearance')?.checked) {
+                const headerBorder = getRandomChoice(['2px solid #000', '3px double #000', '1px solid #333']);
+                headerStyle = `border-bottom: ${headerBorder};`;
+            }
+            
+            html += `<div class="header" style="${headerStyle}">`;
+            html += `<div class="university-name">${university}</div>`;
+            html += `<div class="exam-title">${subject} - Examen Final</div>`;
+            html += `<div class="exam-info">${semester} ${year} • Durée : ${duration} • Total : ${numQuestions * 20} points</div>`;
+            html += `</div>`;
+            
+            html += `<div class="qr-code-section">`;
+            html += `<canvas class="qr-code" width="94" height="94"></canvas>`;
+            html += `</div>`;
+            
+            html += `<div class="student-info">`;
+            html += `<div>Nom : <span class="info-field"></span></div>`;
+            html += `<div>Numéro : <span class="info-field"></span></div>`;
+            html += `<div>Date : <span class="info-field"></span></div>`;
+            html += `</div>`;
+            
+            html += generateGradingColumn(position, spacing, numQuestions, checkboxStates);
+            
+            const contentClass = position === 'left' ? 'content-area-left' : 'content-area-right';
+            html += `<div class="${contentClass}">`;
+            
+            const instructions = [
+                "Instructions : Répondez à toutes les questions. Montrez vos calculs pour obtenir tous les points.",
+                "Consignes : Traitez tous les exercices. Les explications détaillées sont nécessaires.",
+                "Directives : Résolvez chaque problème étape par étape. La clarté est évaluée."
+            ];
+            html += `<div style="font-weight: bold; margin-bottom: 20px;">${getRandomChoice(instructions)}</div>`;
+            
+            for (let i = 1; i <= numQuestions; i++) {
+                html += `<div class="question">`;
+                html += `<div class="question-header">Question ${i} (20 points)</div>`;
+                html += `<div>${getRandomChoice(questionTypes)} ${getRandomChoice(frenchTexts)}</div>`;
+                
+                if (Math.random() > 0.4) {
+                    html += `<div class="multiple-choice">`;
+                    ['A', 'B', 'C', 'D'].forEach(opt => {
+                        html += `<div class="choice">${opt.toLowerCase()}) ${getRandomChoice(choiceTexts)}</div>`;
+                    });
+                    html += `</div>`;
+                } else {
+                    html += `<div class="answer-space"></div>`;
+                    if (Math.random() > 0.5) {
+                        html += `<div class="answer-space"></div>`;
+                    }
+                }
+                
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            html += `</div>`;
+            html += `</div>`;
+            
+            return html;
+        }
+
+        function generateExamSet() {
+            const numPapers = parseInt(document.getElementById('numPapers').value) || 20;
+            const container = document.getElementById('papers-container');
+            container.innerHTML = '';
+            
+            generationStats = { left: 0, right: 0, compact: 0, spaced: 0, totalPapers: 0 };
+            examData = [];
+            
+            for (let i = 0; i < numPapers; i++) {
+                container.innerHTML += generateExamPaper(i);
+            }
+            
+            setTimeout(() => {
+                applyVisualEffects();
+                updateStatistics();
+                drawQRCodes();
+                updateCurrentInfo();
+            }, 100);
+        }
+
+        function applyVisualEffects() {
+            const papers = document.querySelectorAll('.exam-paper');
+            
+            papers.forEach(paper => {
+                if (document.getElementById('addNoise')?.checked) {
+                    const canvas = paper.querySelector('.noise-overlay');
+                    if (canvas) {
+                        addPaperTexture(canvas);
+                    }
+                }
+                
+                let filters = [];
+                
+                if (document.getElementById('varyLighting')?.checked) {
+                    const brightness = getRandomFloat(0.92, 1.08);
+                    const contrast = getRandomFloat(0.96, 1.04);
+                    filters.push(`brightness(${brightness})`);
+                    filters.push(`contrast(${contrast})`);
+                }
+                
+                if (filters.length > 0) {
+                    paper.style.filter = filters.join(' ');
+                }
+            });
+        }
+
+        function addPaperTexture(canvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const noise = Math.random() * 15 - 7.5;
+                const baseValue = 248 + noise;
+                imageData.data[i] = baseValue;
+                imageData.data[i + 1] = baseValue;
+                imageData.data[i + 2] = baseValue;
+                imageData.data[i + 3] = 25;
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            ctx.fillStyle = 'rgba(220, 220, 220, 0.2)';
+            for (let i = 0; i < 5; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 2 + 0.5;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function drawQRCodes() {
+            const canvases = document.querySelectorAll('.qr-code');
+            canvases.forEach(canvas => drawQRCode(canvas));
+        }
+
+        function drawQRCode(canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = 94;
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size);
+            
+            if (customQRImage) {
+                ctx.drawImage(customQRImage, 0, 0, size, size);
+            } else {
+                const moduleSize = 4;
+                const qrPattern = [
+                    "1111111010001001111111",
+                    "1000001010101001000001", 
+                    "1011101010101001011101",
+                    "1011101010101001011101",
+                    "1011101010101001011101",
+                    "1000001010101001000001",
+                    "1111111010101011111111",
+                    "0000000110110000000000",
+                    "1010101001011010101010",
+                    "0101010110100101010101",
+                    "1010101001011010101010",
+                    "0101010110100101010101",
+                    "1010101001011010101010",
+                    "0000000101010000000000",
+                    "1111111001011011111111",
+                    "1000001010101001000001",
+                    "1011101010101001011101",
+                    "1011101010101001011101",
+                    "1011101010101001011101",
+                    "1000001010101001000001",
+                    "1111111010001001111111"
+                ];
+                
+                ctx.fillStyle = 'black';
+                for (let row = 0; row < qrPattern.length && row * moduleSize < size; row++) {
+                    for (let col = 0; col < qrPattern[row].length && col * moduleSize < size; col++) {
+                        if (qrPattern[row][col] === '1') {
+                            ctx.fillRect(col * moduleSize, row * moduleSize, moduleSize, moduleSize);
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateStatistics() {
+            document.getElementById('leftCount').textContent = generationStats.left;
+            document.getElementById('rightCount').textContent = generationStats.right;
+            document.getElementById('compactCount').textContent = generationStats.compact;
+            document.getElementById('spacedCount').textContent = generationStats.spaced;
+        }
+
+        function updateCurrentInfo() {
+            const total = generationStats.totalPapers;
+            if (total === 0) return;
+            
+            const qrInfo = customQRImage ? ' • QR personnalisé utilisé' : ' • QR généré automatiquement';
+            
+            const info = `${total} copies générées${qrInfo}:
+• Position gauche: ${generationStats.left} (${(generationStats.left/total*100).toFixed(1)}%)
+• Position droite: ${generationStats.right} (${(generationStats.right/total*100).toFixed(1)}%)
+• Espacement compact: ${generationStats.compact} (${(generationStats.compact/total*100).toFixed(1)}%)
+• Espacement aéré: ${generationStats.spaced} (${(generationStats.spaced/total*100).toFixed(1)}%)`;
+            
+            document.getElementById('currentInfo').textContent = info;
+        }
+
+        function exportLayoutGuide() {
+            if (examData.length === 0) {
+                alert('Générez d\'abord des examens !');
+                return;
+            }
+            
+            let exportText = `GUIDE DE LABELLISATION POUR YOLO - ZONES DE NOTATION\n`;
+            exportText += `Généré le : ${new Date().toLocaleString('fr-FR')}\n`;
+            exportText += `Total des copies : ${examData.length}\n`;
+            exportText += `QR Code : ${customQRImage ? 'Personnalisé utilisé' : 'Généré automatiquement'}\n\n`;
+            
+            exportText += `OBJECTIF :\n`;
+            exportText += `Entraîner YOLO à détecter les zones de notation complètes (colonnes avec cases à cocher)\n\n`;
+            
+            exportText += `DISTRIBUTION DES LAYOUTS :\n`;
+            exportText += `• Colonnes gauches : ${generationStats.left}\n`;
+            exportText += `• Colonnes droites : ${generationStats.right}\n`;
+            exportText += `• Espacement compact : ${generationStats.compact}\n`;
+            exportText += `• Espacement aéré : ${generationStats.spaced}\n\n`;
+            
+            exportText += `INSTRUCTIONS DE LABELLISATION :\n`;
+            exportText += `1. Utilisez une seule classe : "zone_notation"\n`;
+            exportText += `2. Dessinez un rectangle autour de TOUTE la colonne de notation\n`;
+            exportText += `3. Incluez l'en-tête ("NOTATION", "ÉVALUATION", etc.)\n`;
+            exportText += `4. Incluez tous les Q1, Q2, ... avec leurs cases\n`;
+            exportText += `5. Incluez les espaces de notation manuelle (__/20)\n\n`;
+            
+            exportText += `DÉTAILS DES ZONES À LABELLISER :\n`;
+            exportText += `• Position : Gauche ou droite de la page\n`;
+            exportText += `• Largeur : Environ 25mm (colonne complète)\n`;
+            exportText += `• Hauteur : Variable selon nombre de questions\n`;
+            exportText += `• Contenu : En-tête + Questions + Cases + Espace manuel\n\n`;
+            
+            exportText += `OUTILS RECOMMANDÉS :\n`;
+            exportText += `• LabelImg (simple, efficace)\n`;
+            exportText += `• Roboflow (en ligne, avec suggestions)\n`;
+            exportText += `• CVAT (collaboratif)\n\n`;
+            
+            exportText += `DÉTAIL PAR COPIE :\n`;
+            exportText += `=====================================\n`;
+            
+            examData.forEach((exam, index) => {
+                exportText += `Copie ${index + 1} :\n`;
+                exportText += `  Position colonne : ${exam.position.toUpperCase()}\n`;
+                exportText += `  Espacement : ${exam.spacing === 'compact' ? 'COMPACT' : 'AÉRÉ'}\n`;
+                exportText += `  Questions : ${exam.numQuestions}\n`;
+                exportText += `  Université : ${exam.university}\n`;
+                exportText += `  Matière : ${exam.subject}\n`;
+                exportText += `  Zone à labelliser : 1 rectangle (colonne ${exam.position})\n`;
+                exportText += `  États des cases : `;
+                exam.checkboxStates.forEach((state, qIndex) => {
+                    exportText += `Q${qIndex + 1}:${state.grade} `;
+                });
+                exportText += `\n  ---\n`;
+            });
+            
+            exportText += `\nCONSEILS POUR L'ENTRAÎNEMENT :\n`;
+            exportText += `• Minimum 20 images labellisées manuellement\n`;
+            exportText += `• Augmentation automatique : rotation, luminosité, bruit\n`;
+            exportText += `• Test sur quelques images avant entraînement complet\n`;
+            exportText += `• Validation croisée avec images non vues\n\n`;
+            
+            exportText += `APRÈS ENTRAÎNEMENT :\n`;
+            exportText += `1. YOLO détecte la zone → donne coordonnées [x,y,w,h]\n`;
+            exportText += `2. Votre app crope cette zone de l'image\n`;
+            exportText += `3. OpenCV traite la zone croppée (plus facile !)\n`;
+            exportText += `4. Détection des cases individuelles dans la zone\n`;
+            exportText += `5. Classification coché/non-coché par OpenCV\n\n`;
+            
+            exportText += `AVANTAGES DE CETTE APPROCHE :\n`;
+            exportText += `✓ YOLO travaille sur de gros objets (plus fiable)\n`;
+            exportText += `✓ OpenCV travaille sur images nettes et cadrées\n`;
+            exportText += `✓ Robuste aux rotations et déformations\n`;
+            exportText += `✓ Une seule classe à entraîner (simple)\n`;
+            exportText += `✓ Zone manuelle future déjà prévue dans layout\n`;
+            exportText += `✓ QR code ${customQRImage ? 'personnalisé intégré' : 'généré standardisé'} pour identification\n`;
+            
+            const blob = new Blob([exportText], { type: 'text/plain; charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `guide_labellisation_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function printAllPapers() {
+            window.print();
+        }
+
+        window.onload = function() {
+            document.getElementById('numPapers').value = 20;
+            document.getElementById('questionsPerPaper').value = 8;
+            generateExamSet();
+        };
+    </script>
+</body>
+</html>
