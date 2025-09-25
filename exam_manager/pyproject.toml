@@ -1,0 +1,21 @@
+[project]
+name = "exam-processing"
+version = "0.1.0"
+description = "Tool for processing exam PDFs: encrypts student info with AES/Fernet, encodes it into QR codes, extracts and decodes them from scanned exams, and performs grading."
+authors = [{ name = "Mohamed L. Baklouti", email = "louaybaklouti380@gmail.com" }]
+requires-python = ">=3.10"
+
+dependencies = [
+    "opencv-python>=4.10.0",
+    "numpy>=1.24",
+    "cryptography>=42.0.5",
+    "pyzxing",
+    "pdf2image",
+    "zxingcpp",
+    "pytesseract",
+    "torch",
+    "ultralytics",
+    "pillow",
+    "qrcode",
+    "PyQt5"
+]

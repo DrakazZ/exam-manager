@@ -1,0 +1,24 @@
+{
+  "options_per_question": 3,
+  "option_labels": [
+    "bon",
+    "moyen",
+    "non"
+  ],
+  "use_adaptive_threshold": true,
+  "black_ratio_threshold": 0.22,
+  "qr_crop_region": null,
+  "enable_deskew": false,
+  "use_yolo_zone_detection": true,
+  "yolo_model_path": "W:/stage25/model/runs/detect/checkbox_optimized/weights/best.pt",
+  "yolo_confidence": 0.5,
+  "zone_expansion_factor": 0.05,
+  "fallback_to_full_page": true,
+  "debug_cv": true,
+  "debug_dump_n": 24,
+  "inner_crop_pct": 0.18,
+  "min_inner_on_ratio": 0.06,
+  "strong_inner_on_ratio": 0.12,
+  "edge_density_thr": 0.06,
+  "min_vote_score": 0.12
+}
